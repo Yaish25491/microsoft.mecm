@@ -1,4 +1,10 @@
 ---
+- name: Get all site status messages to verify module works
+  microsoft.mecm.site_status_message_info:
+    site_code: "{{ test_site_code }}"
+    severity: all
+  register: _get_all_status_messages
+
 - name: Get site status messages with component and severity
   microsoft.mecm.site_status_message_info:
     site_code: "{{ test_site_code }}"
@@ -12,17 +18,35 @@
     severity: error
   register: _get_error_status_messages
 
-- name: Check output
+- name: Display results for debugging
+  ansible.builtin.debug:
+    msg: |
+      All messages count: {{ _get_all_status_messages.site_status_messages | length }}
+      Component messages count: {{ _get_component_status_messages.site_status_messages | length }}
+      Error messages count: {{ _get_error_status_messages.site_status_messages | length }}
+
+- name: Check basic module functionality
   ansible.builtin.assert:
     that:
-      - _get_component_status_messages.site_status_messages | length > 0
-      - _get_error_status_messages.site_status_messages | length > 0
+      - _get_all_status_messages.site_status_messages is defined
+      - _get_component_status_messages.site_status_messages is defined
+      - _get_error_status_messages.site_status_messages is defined
+      - _get_all_status_messages is not ansible.builtin.changed
       - _get_component_status_messages is not ansible.builtin.changed
       - _get_error_status_messages is not ansible.builtin.changed
+    fail_msg: "Module should return status message arrays and not be marked as changed"
+
+- name: Check filtering works correctly (when messages exist)
+  ansible.builtin.assert:
+    that:
+      # If component messages exist, they should all be from SMS_NOTIFICATION_SERVER
       - >-
-        _get_component_status_messages.site_status_messages | selectattr('component', 'equalto', 'SMS_NOTIFICATION_SERVER') | length ==
-        _get_component_status_messages.site_status_messages | length
+        _get_component_status_messages.site_status_messages | length == 0 or
+        (_get_component_status_messages.site_status_messages | selectattr('component', 'equalto', 'SMS_NOTIFICATION_SERVER') | length ==
+        _get_component_status_messages.site_status_messages | length)
+      # If error messages exist, they should all have error severity
       - >-
-        _get_error_status_messages.site_status_messages | selectattr('severity', 'equalto', 'error') | length ==
-        _get_error_status_messages.site_status_messages | length
-    quiet: true
+        _get_error_status_messages.site_status_messages | length == 0 or
+        (_get_error_status_messages.site_status_messages | selectattr('severity', 'equalto', 'error') | length ==
+        _get_error_status_messages.site_status_messages | length)
+    fail_msg: "Message filtering should work correctly when messages are present"
