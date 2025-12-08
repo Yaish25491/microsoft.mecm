@@ -27,7 +27,7 @@ DOCUMENTATION:
       required: false
       type: str
       default: "Backup SMS Site Server"
-    site_name:
+    site_code:
       description:
         - The SCCM site code (usually 3 characters) to connect to.
         - This is the primary site code where the backup task is configured.
@@ -47,22 +47,22 @@ DOCUMENTATION:
 EXAMPLES: |
   - name: Check backup status of local SCCM server
     microsoft.mecm.backups_status_info:
-      site_name: "PS1"
+      site_code: "PS1"
 
   - name: Check backup status of remote primary site server
     microsoft.mecm.backups_status_info:
       computer_name: "sccm-primary.domain.com"
-      site_name: "PS1"
+      site_code: "PS1"
 
   - name: Verify backup task is enabled and recent
     microsoft.mecm.backups_status_info:
       computer_name: "{{ sccm_server }}"
-      site_name: "{{ sccm_site_code }}"
+      site_code: "{{ sccm_site_code }}"
     register: backup_info
 
   - name: Check custom backup task
     microsoft.mecm.backups_status_info:
-      site_name: "PS1"
+      site_code: "PS1"
       backup_task_name: "Custom Backup Task"
 
   - name: Ensure backup is configured and successful

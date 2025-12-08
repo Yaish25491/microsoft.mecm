@@ -23,6 +23,12 @@ DOCUMENTATION:
         - The server must have a configured software update point role.
       required: true
       type: str
+    site_code:
+      description:
+        - The SCCM site code (usually 3 characters) to connect to.
+        - This is the primary site code where the software update point is configured.
+      required: true
+      type: str
   notes:
     - This module requires the SCCM Console to be installed on the target machine.
     - The module connects to the SCCM site server using PowerShell cmdlets and WMI queries.
@@ -38,17 +44,20 @@ EXAMPLES: |
   - name: Get WSUS sync status for primary site server
     microsoft.mecm.wsus_sync_status_info:
       computer_name: "sccm-primary.contoso.com"
+      site_code: "PS1"
     register: wsus_status
 
   - name: Check if WSUS sync was successful
     microsoft.mecm.wsus_sync_status_info:
       computer_name: "{{ ansible_fqdn }}"
+      site_code: "{{ sccm_site_code }}"
     register: sync_result
     failed_when: sync_result.sync_status == "Failed"
 
   - name: Display sync status information
     microsoft.mecm.wsus_sync_status_info:
       computer_name: "sccm-primary.contoso.com"
+      site_code: "PS1"
     register: wsus_info
 
   - name: Show sync results
@@ -61,6 +70,7 @@ EXAMPLES: |
   - name: Monitor WSUS sync health in a loop
     microsoft.mecm.wsus_sync_status_info:
       computer_name: "sccm-primary.contoso.com"
+      site_code: "PS1"
     register: wsus_check
     until: wsus_check.sync_status == "Success"
     retries: 10
